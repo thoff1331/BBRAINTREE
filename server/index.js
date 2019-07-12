@@ -1,47 +1,72 @@
 require("dotenv").config();
 let express = require("express");
 let app = express();
-var braintree = require("braintree");
+var express_graphql = require("express-graphql");
+var { buildSchema } = require("graphql");
 
-app.use(express.json());
-let {
-  BT_ENVIROMENT,
-  BT_MERCHANT_ID,
-  BT_PUBLIC_KEY,
-  BT_PRIVATE_KEY
-} = process.env;
+// GraphQL schema
+var schmea = buildSchema(`
+type Query {
+    message: String
+}
+`);
+var root = {
+  message: () => "Hello World"
+};
 
-let gateway = braintree.connect({
-  enviroment: BT_ENVIROMENT,
-  mechantId: BT_MERCHANT_ID,
-  publicKey: BT_PUBLIC_KEY,
-  privateKey: BT_PRIVATE_KEY
-});
+//Express server and Graphql endpoint
 
-gateway.clientToken.generate(
-  {
-    customerid: ""
-  },
-  function(err, response) {
-    let clientToken = response.clientToken;
-  }
+app.use(
+  "/graphql",
+  express_graphql({
+    schema: schmea,
+    rootValue: root,
+    graphiql: true
+  })
 );
+// var braintree = require("braintree");
 
-app.post("/checkout", function(req, res) {
-  let nonceFromTheClient = req.body.payment_method_nonce;
-  // use payment method nonce here
-});
+// app.use(express.json());
+// let {
+//   BT_ENVIROMENT,
+//   BT_MERCHANT_ID,
+//   BT_PUBLIC_KEY,
+//   BT_PRIVATE_KEY
+// } = process.env;
 
-gateway.transaction.sale(
-  {
-    amount: "10.00",
-    paymentMethodNonce: nonceFromTheClient,
-    options: {
-      submitForSettlement: true
-    }
-  },
-  function(err, result) {}
-);
-app.listen(3131, () => {
-  console.log("Live on port 3131");
+// let gateway = braintree.connect({
+//   enviroment: BT_ENVIROMENT,
+//   mechantId: BT_MERCHANT_ID,
+//   publicKey: BT_PUBLIC_KEY,
+//   privateKey: BT_PRIVATE_KEY
+// });
+
+// gateway.clientToken.generate(
+//   {
+//     customerid: ""
+//   },
+//   function(err, response) {
+//     let clientToken = response.clientToken;
+//   }
+// );
+
+// app.post("/checkout", function(req, res) {
+//   let nonceFromTheClient = req.body.payment_method_nonce;
+//   // use payment method nonce here
+// });
+
+// gateway.transaction.sale(
+//   {
+//     amount: "10.00",
+//     paymentMethodNonce: nonceFromTheClient,
+//     options: {
+//       submitForSettlement: true
+//     }
+//   },
+//   function(err, result) {}
+// );
+const PORT = 3131;
+
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
 });
